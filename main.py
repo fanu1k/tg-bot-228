@@ -21,21 +21,36 @@ def register(message):
         msg = bot.send_message(chat_id, 'incorrect login')
         bot.register_next_step_handler(msg, register)
         return
-    # Логин в базу
+    # Логин в базу (ЕГОР!!!!!!!!!)
     msg = bot.send_message(chat_id, 'Добро пожаловть ' + text)
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     button_pay = types.KeyboardButton(text="Пройти тест")
     button_file = types.KeyboardButton(text="Начать с нуля")
     keyboard.add(button_pay, button_file)
-    msg = bot.send_message(message.chat.id, "Вы можете пройти тест на знание python, либо начать с начала", reply_markup=keyboard)
+    txt = "Вы можете пройти тест на знание python, либо начать с начала"
+    msg = bot.send_message(message.chat.id, txt, reply_markup=keyboard)
     bot.register_next_step_handler(msg, choise)
 
 
 def choise(message):
     if message.text == 'Пройти тест':
-        # Тест
-    if message.text == 'Начать с нуля':
-        # Игра
+        keyboard = types.ReplyKeyboardRemove()
+        bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
+        test(message)
+    elif message.text == 'Начать с нуля':
+        keyboard = types.ReplyKeyboardRemove()
+        bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
+        game(message)
+    else:
+        bot.register_next_step_handler(message, choise)
+
+
+def test(message):
+    pass
+
+
+def game(message, lvl=0):
+    pass
 
 
 if __name__ == '__main__':
