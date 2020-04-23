@@ -1,13 +1,22 @@
-import telebot
+﻿import telebot
 from telebot import types
-from data import *
+import sqlite3
+from data import User
 
 bot = telebot.TeleBot('1265769270:AAEW4OJS-8ZvCB272gtHCSx_RLwids1llcc')
+
+user = User(0, 0, 0, 0)
 
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    if message.chat.id not in "base":
+    con = sqlite3.connect('user_database.db')
+    cur = con.cursor()
+    result = cur.execute(
+        "SELECT Login FROM database WHERE ID = '%s'" % message.chat.id).fetchone()
+    con.close()
+    print(result)
+    if result is None:
         bot.send_message(message.chat.id, 'Приветствие')
         msg = bot.send_message(message.chat.id, 'Введите предпочитаемое имя пользователя')
         bot.register_next_step_handler(msg, register)
@@ -16,13 +25,21 @@ def start_message(message):
 
 
 def register(message):
+    global user
     chat_id = message.chat.id
     text = message.text
     if not (5 < len(text) < 15):
         msg = bot.send_message(chat_id, 'incorrect login')
         bot.register_next_step_handler(msg, register)
         return
-    insert_name(chat_id, text)
+    con = sqlite3.connect('user_database.db')
+    cur = con.cursor()
+    result = cur.execute(
+        "INSERT INTO database (ID, Login, Exp, Completed) VALUES ('%s', '%s', '%s', '%s')" % (chat_id, text, 0, 0))
+    con.commit()
+    con.close()
+    user = User(chat_id, text, 0, 0)
+    print(user)
     msg = bot.send_message(chat_id, 'Добро пожаловть ' + text)
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     button_pay = types.KeyboardButton(text="Пройти тест")
@@ -34,6 +51,7 @@ def register(message):
 
 
 def choise(message):
+    global user
     if message.text == 'Пройти тест':
         keyboard = types.ReplyKeyboardRemove()
         bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
@@ -41,8 +59,7 @@ def choise(message):
     elif message.text == 'Начать с нуля':
         keyboard = types.ReplyKeyboardRemove()
         bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
-        change_exp(message.chat_id, 0)
-        game(message)
+        user.set_info()
     else:
         bot.register_next_step_handler(message, choise)
 
