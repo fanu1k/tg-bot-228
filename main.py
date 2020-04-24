@@ -5,7 +5,7 @@ from data import User
 
 bot = telebot.TeleBot('1265769270:AAEW4OJS-8ZvCB272gtHCSx_RLwids1llcc')
 
-user = User(0, 0, 0, 0)
+user = User(0, 0, 0, '0')
 
 
 @bot.message_handler(commands=['start'])
@@ -15,13 +15,18 @@ def start_message(message):
     result = cur.execute(
         "SELECT Login FROM database WHERE ID = '%s'" % message.chat.id).fetchone()
     con.close()
-    print(result)
+    greeting = open('data/greeting.webp', 'rb')
+    bot.send_sticker(message.chat.id, greeting)
     if result is None:
         bot.send_message(message.chat.id, 'Приветствие')
         msg = bot.send_message(message.chat.id, 'Введите предпочитаемое имя пользователя')
         bot.register_next_step_handler(msg, register)
     else:
         bot.send_message(message.chat.id, 'Вы уже зарегестрированны')
+        id = user.get_id(result[0], False)
+        exp = user.get_exp(result[0], False)
+        complited = user.get_complited(result[0], False)
+        user.update_info(id, result[0], exp, complited)
 
 
 def register(message):
@@ -39,7 +44,6 @@ def register(message):
     con.commit()
     con.close()
     user = User(chat_id, text, 0, 0)
-    print(user)
     msg = bot.send_message(chat_id, 'Добро пожаловть ' + text)
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     button_pay = types.KeyboardButton(text="Пройти тест")
@@ -47,21 +51,17 @@ def register(message):
     keyboard.add(button_pay, button_file)
     txt = "Вы можете пройти тест на знание python, либо начать с начала"
     msg = bot.send_message(message.chat.id, txt, reply_markup=keyboard)
-    bot.register_next_step_handler(msg, choise)
 
 
+@bot.message_handler(content_types=['text'])
 def choise(message):
     global user
-    if message.text == 'Пройти тест':
-        keyboard = types.ReplyKeyboardRemove()
-        bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
-        test(message)
-    elif message.text == 'Начать с нуля':
-        keyboard = types.ReplyKeyboardRemove()
-        bot.send_message(message.chat_id, 'txt', reply_markup=keyboard)
-        user.set_info()
-    else:
-        bot.register_next_step_handler(message, choise)
+    if message.chat.type == 'private':
+        if message.text == 'Пройти тест':
+            pass
+        elif message.text == 'Начать с нуля':
+            user.set_info()
+            print('Привет')
 
 
 def test(message):
